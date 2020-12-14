@@ -1,0 +1,123 @@
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const ESLintPlugin = require("eslint-webpack-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const path = require("path");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+
+module.exports = (env) => {
+  // Use env.<YOUR VARIABLE> here:
+  console.log("NODE_ENV: ", env.NODE_ENV); // 'local'
+  console.log("Production: ", env.production); // true
+
+  return {
+    mode: "production",
+    entry: "./src/index.ts",
+    target: "web",
+    devtool: "source-map",
+    performance: {
+      //hints: 'error'
+    },
+    plugins: [
+      new ESLintPlugin({
+        failOnError: false,
+        failOnWarning: false,
+        emitWarning: true,
+      }),
+      new CopyPlugin({
+        patterns: [{ from: "./src/img", to: "./img" }],
+      }),
+      new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
+      new HtmlWebpackPlugin({
+        title: "production",
+        template: "src/index.hbs",
+      }),
+      new MiniCssExtractPlugin({
+        filename: "[name].css",
+        chunkFilename: "[id].css",
+        ignoreOrder: false,
+      }),
+    ],
+    output: {
+      filename: "[name].[contenthash].bundle.js",
+      path: path.resolve(__dirname, "dist"),
+      publicPath: "/",
+    },
+    module: {
+      rules: [
+        {
+          enforce: "pre",
+          test: /\.(ts|js)x?$/,
+          exclude: /node_modules/,
+          use: [
+            {
+              loader: "babel-loader",
+            },
+          ],
+        },
+        {
+          test: /\.s[ac]ss$/i,
+          use: [
+            {
+              loader: MiniCssExtractPlugin.loader,
+            },
+            {
+              loader: "css-loader",
+              options: {
+                sourceMap: true,
+                importLoaders: 2,
+              },
+            },
+            {
+              loader: "postcss-loader",
+              options: {
+                sourceMap: true,
+                postcssOptions: {
+                  config: path.resolve(__dirname, "postcss.config.js"),
+                },
+              },
+            },
+            {
+              loader: "sass-loader",
+              options: {
+                sourceMap: true,
+              },
+            },
+          ],
+        },
+        {
+          test: /\.hbs$/,
+          loader: "handlebars-loader",
+        },
+        {
+          test: /\.(png|jpg|jpeg|gif)$/i,
+          type: "asset/resource",
+        },
+        {
+          test: /\.svg/,
+          type: "asset/inline",
+        },
+        {
+          test: /\.(woff|woff2|eot|ttf|otf)$/i,
+          type: "asset/resource",
+        },
+        {
+          test: /\.(csv|tsv)$/i,
+          use: ["csv-loader"],
+        },
+        {
+          test: /\.xml$/i,
+          use: ["xml-loader"],
+        },
+      ],
+    },
+    resolve: {
+      extensions: [".tsx", ".ts", ".js"],
+    },
+    optimization: {
+      minimize: true,
+      minimizer: [new CssMinimizerPlugin()],
+    },
+  };
+};

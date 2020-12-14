@@ -1,0 +1,25 @@
+version: "3.3"
+services:
+  apache-php-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports: 
+        - "80:80"
+        - "443:443"
+    volumes: 
+        - ./src:/var/www/html
+        - ./logs/apache-php:/var/log/apache2
+
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
